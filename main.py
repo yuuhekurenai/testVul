@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import os
 import stat
@@ -12,6 +13,10 @@ import platform
 import tkinter as tk
 from tkinter import messagebox
 from tkinter.ttk import Progressbar
+
+# Configuração do logging
+logging.basicConfig(filename='security_check.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Configurações do e-mail
 smtp_server = 'smtp.gmail.com'
@@ -229,16 +234,22 @@ def check_file_owner(path, owner):
 
 # Função para enviar e-mail
 def send_email(subject, body):
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = sender_email
-    msg['To'] = receiver_email
+    try:
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = sender_email
+        msg['To'] = receiver_email
 
-    with smtplib.SMTP(smtp_server, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_username, smtp_password)
-        server.send_message(msg)
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.send_message(msg)
 
+        logging.info("E-mail enviado: Assunto='%s'", subject)
+
+    except Exception as e:
+        logging.error("Erro ao enviar e-mail: %s", str(e))
+        raise
 
 # Função para enviar e-mail de alerta de rede
 def send_network_alert_email(vulnerable_ports):
@@ -405,85 +416,92 @@ def check_wifi_security(log_list):
 
 # Função para verificar a segurança ao executar o programa
 def check_security(log_list, progress_bar, log_text):
+    try:
+        check_system_compatibility(log_list)
+        operating_system = platform.system()
+        linux_version_result = None
+        windows_version_result = None
+        macos_version_result = None
+        network_vulnerabilities = None
+        user_data_security = None
+        wifi_security = None
 
-    check_system_compatibility(log_list)
-    operating_system = platform.system()
-    linux_version_result = None
-    windows_version_result = None
-    macos_version_result = None
-    network_vulnerabilities = None
-    user_data_security = None
-    wifi_security = None
+        if operating_system == 'Linux':
+            check_linux_version(log_list)
+            network_vulnerabilities = check_network_vulnerabilities(log_list)
+            user_data_security = check_user_data_security(log_list)
+            wifi_security = check_wifi_security(log_list)  # Nova função de verificação adicionada
+        elif operating_system == 'Windows':
+            check_windows_version(log_list)
+            if windows_version_result:
+                fix_common_network_security_issues()
+        elif operating_system == 'Darwin':
+            check_macos_version(log_list)
 
-    if operating_system == 'Linux':
-        check_linux_version(log_list)
-        network_vulnerabilities = check_network_vulnerabilities(log_list)
-        user_data_security = check_user_data_security(log_list)
-        wifi_security = check_wifi_security(log_list)  # Nova função de verificação adicionada
-    elif operating_system == 'Windows':
-        check_windows_version(log_list)
-        if windows_version_result:
-            fix_common_network_security_issues()
-    elif operating_system == 'Darwin':
-        check_macos_version(log_list)
+        fixes_applied = False
 
-    fixes_applied = False
+        if operating_system == 'Linux' and (linux_version_result or network_vulnerabilities or user_data_security):
+            # Se foram encontradas vulnerabilidades no Linux
+            subject = 'Relatório de Verificação de Segurança - Vulnerabilidades Encontradas (Linux)'
+            body = 'Foram encontradas as seguintes vulnerabilidades no Linux:\n\n'
 
-    if operating_system == 'Linux' and (linux_version_result or network_vulnerabilities or user_data_security):
-        # Se foram encontradas vulnerabilidades no Linux
-        subject = 'Relatório de Verificação de Segurança - Vulnerabilidades Encontradas (Linux)'
-        body = 'Foram encontradas as seguintes vulnerabilidades no Linux:\n\n'
+            if linux_version_result:
+                body += 'Vulnerabilidades no Linux:\n'
+                body += linux_version_result + '\n\n'
 
-        if linux_version_result:
-            body += 'Vulnerabilidades no Linux:\n'
-            body += linux_version_result + '\n\n'
+            if network_vulnerabilities:
+                body += 'Vulnerabilidades de rede (portas abertas):\n'
+                for port in network_vulnerabilities:
+                    body += f'A porta {port} está aberta e é conhecida por ser vulnerável.\n'
 
-        if network_vulnerabilities:
-            body += 'Vulnerabilidades de rede (portas abertas):\n'
-            for port in network_vulnerabilities:
-                body += f'A porta {port} está aberta e é conhecida por ser vulnerável.\n'
+            if user_data_security:
+                body += 'Vulnerabilidades nos dados dos usuários:\n'
+                for file in user_data_security:
+                    body += file + '\n'
 
-        if user_data_security:
-            body += 'Vulnerabilidades nos dados dos usuários:\n'
-            for file in user_data_security:
-                body += file + '\n'
+            fixes_applied = True
+        elif operating_system == 'Windows' and windows_version_result:
+            subject = 'Relatório de Verificação de Segurança - Versão do Windows'
+            body = f'O Windows está na versão {windows_version_result}'
+            fixes_applied = True
+        elif operating_system == 'Darwin' and macos_version_result:
+            subject = 'Relatório de Verificação de Segurança - Versão do MacOS'
+            body = f'O MacOS está na versão {macos_version_result}'
+            fixes_applied = True
 
-        fixes_applied = True
-    elif operating_system == 'Windows' and windows_version_result:
-        subject = 'Relatório de Verificação de Segurança - Versão do Windows'
-        body = f'O Windows está na versão {windows_version_result}'
-        fixes_applied = True
-    elif operating_system == 'Darwin' and macos_version_result:
-        subject = 'Relatório de Verificação de Segurança - Versão do MacOS'
-        body = f'O MacOS está na versão {macos_version_result}'
-        fixes_applied = True
+        if fixes_applied:
+            # Verificar e remover o cryptojacking
+            check_and_remove_cryptojacking()
 
-    if fixes_applied:
-        # Verificar e remover o cryptojacking
-        check_and_remove_cryptojacking()
+            # Remover executáveis maliciosos
+            remove_malicious_executables()
 
-        # Remover executáveis maliciosos
-        remove_malicious_executables()
+            # Configurar limites de conexão
+            configure_connection_limits()
 
-        # Configurar limites de conexão
-        configure_connection_limits()
+            # Configurar IDS/IPS
+            configure_ids_ips()
 
-        # Configurar IDS/IPS
-        configure_ids_ips()
+            # Verificar segurança da rede Wi-Fi
+            check_wifi_security(log_list)
 
-        # Verificar segurança da rede Wi-Fi
-        check_wifi_security(log_list)
+            # Enviar o e-mail apenas se a barra de progresso estiver completa (100%)
+            if progress_bar["value"] == 100:
+                send_email(subject, body)
+                log_list.append("E-mail enviado.")
+                logging.info("E-mail de relatório enviado.")
+                messagebox.showinfo('Concluído', 'A verificação de segurança foi concluída e o e-mail foi enviado.')
+            else:
+                messagebox.showinfo('Concluído', 'A verificação de segurança foi concluída.')
 
-        # Enviar o e-mail apenas se a barra de progresso estiver completa (100%)
-        if progress_bar["value"] == 100:
-            send_email(subject, body)
-            log_list.append("E-mail enviado.")
-            messagebox.showinfo('Concluído', 'A verificação de segurança foi concluída e o e-mail foi enviado.')
-        else:
-            messagebox.showinfo('Concluído', 'A verificação de segurança foi concluída.')
+        # Atualizar a lista de log
+        update_log_list(log_list, log_text)
 
-    # Atualizar a lista de log
-    update_log_list(log_list, log_text)
+    except Exception as e:
+        log_list.append("Ocorreu um erro durante a verificação de segurança:")
+        log_list.append(str(e))
+        logging.exception("Erro durante a verificação de segurança:")
+        update_log_list(log_list, log_text)
 
 
 # Função para atualizar a lista de log
