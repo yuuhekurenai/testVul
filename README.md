@@ -23,7 +23,7 @@ Scripts Externos: O código utiliza algumas chamadas de subprocessos para execut
 
 Permissões de Execução: Verifique as permissões necessárias para executar alguns comandos e scripts externos, como iptables, fail2ban, entre outros. Dependendo da execução do programa, pode ser necessário executá-lo com permissões de administrador ou superusuário.
 
-Interatividade da Interface: Durante a execução da verificação, a interface gráfica não é responsiva, o que significa que o usuário não pode interagir com a janela enquanto a verificação ocorre. Isso pode não ser uma boa experiência de usuário. Considere adicionar uma barra de progresso indeterminada (sem valor máximo) ou permitir que o usuário cancele a verificação.
+Interatividade da Interface: Durante a execução da verificação, a interface gráfica não é responsiva, o que significa que o usuário não pode interagir com a janela enquanto a verificação ocorre.
 
 Tempo de Execução da Verificação: O tempo de execução da verificação pode variar dependendo do sistema e do número de verificações realizadas. Verifique se a interface gráfica não bloqueia por um longo período de tempo, pois isso pode levar à impressão de que o programa travou.
 
