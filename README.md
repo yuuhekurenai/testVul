@@ -11,13 +11,13 @@ Verificações de Sistema Operacional: O código realiza verificações diferent
 
 Segurança de Rede Wi-Fi: Uma nova função check_wifi_security foi adicionada para verificar a segurança da rede Wi-Fi. No entanto, esta função não está sendo chamada em nenhum lugar do código principal. É necessário adicionar a chamada a essa função no local adequado, como a função check_security.
 
-Chamada de Função em Loop: No final do código, há uma chamada para window.mainloop(), o que indica que o programa vai entrar em um loop para esperar por eventos da interface gráfica (Tkinter). No entanto, este loop é executado apenas após o término da verificação de segurança, que é iniciada com a função start_security_check. Isso significa que a interface gráfica não será atualizada enquanto a verificação estiver em andamento. Considere mover a chamada window.mainloop() para o início do código, logo após a criação da janela principal, para permitir a interação com a interface enquanto a verificação ocorre em segundo plano.
+Chamada de Função em Loop: No final do código, há uma chamada para window.mainloop(), o que indica que o programa vai entrar em um loop para esperar por eventos da interface gráfica (Tkinter). No entanto, este loop é executado apenas após o término da verificação de segurança, que é iniciada com a função start_security_check. Isso significa que a interface gráfica não será atualizada enquanto a verificação estiver em andamento.
 
 Exceções e Tratamento de Erros: O código faz uso de exceções para tratar erros em diversas partes do programa. No entanto, quando uma exceção ocorre, a função update_log_list é chamada para atualizar a lista de log. No entanto, as exceções podem conter informações sensíveis e detalhes do sistema, portanto, é importante tomar cuidado com o que é exibido no log.
 
 Conteúdo do Log: O log gerado pelo programa é bastante detalhado e pode conter informações sensíveis do sistema, dependendo do erro ocorrido ou das vulnerabilidades encontradas. Considere revisar o conteúdo do log para garantir que informações críticas não sejam expostas.
 
-Código de Atualização da Barra de Progresso: O código que verifica o progresso da barra e atualiza a lista de log poderia ser mais eficiente. A verificação do progresso não precisa ser feita em um intervalo tão curto, o que pode consumir recursos do sistema. Considere aumentar o intervalo para a verificação do progresso, ou melhor ainda, utilize eventos de finalização da verificação para atualizar a interface gráfica, em vez de verificar o progresso constantemente.
+Código de Atualização da Barra de Progresso: O código que verifica o progresso da barra e atualiza a lista de log poderia ser mais eficiente. A verificação do progresso não precisa ser feita em um intervalo tão curto, o que pode consumir recursos do sistema.
 
 Scripts Externos: O código utiliza algumas chamadas de subprocessos para executar comandos externos, como lsb_release, wmic, sw_vers, netstat, entre outros. Verifique se esses comandos existem e são válidos no ambiente onde o código será executado.
 
@@ -29,6 +29,3 @@ Tempo de Execução da Verificação: O tempo de execução da verificação pod
 
 Criptografia de Senha da Rede Wi-Fi: A função is_wifi_password_strong verifica a força da senha da rede Wi-Fi. No entanto, é importante lembrar que não é aconselhável obter ou verificar a senha da rede Wi-Fi do sistema. Isso pode violar a privacidade do usuário e também pode não ser possível obter a senha de uma rede Wi-Fi protegida adequadamente.
 
-UI / UX: A interface gráfica é simples e funcional, mas pode ser aprimorada para fornecer uma experiência de usuário mais agradável. Isso pode incluir adicionar mais informações sobre as etapas da verificação, adicionar um indicador visual de que a verificação está em andamento e melhorar a apresentação dos resultados.
-
-Encapsulamento e Organização do Código: O código atual é um script único e pode se beneficiar do encapsulamento de algumas funcionalidades em classes ou módulos separados. Isso tornaria o código mais modular e mais fácil de manter e estender no futuro.
