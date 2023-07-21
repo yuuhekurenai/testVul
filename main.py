@@ -21,8 +21,6 @@ logging.basicConfig(filename='security_check.log', level=logging.INFO,
 # Configurações do e-mail
 smtp_server = 'smtp.gmail.com'
 smtp_port = 587
-smtp_username = 'yuuhekurenai@gmail.com'
-smtp_password = 'ivwrvyqqqxmzxiti'
 sender_email = 'yuuhekurenai@gmail.com'
 receiver_email = 'celestino.orbital@gmail.com'
 
@@ -235,9 +233,15 @@ def check_file_owner(path, owner):
 # Função para enviar e-mail
 def send_email(subject, body):
     try:
+        smtp_username = os.environ.get('SMTP_USERNAME')
+        smtp_password = os.environ.get('SMTP_PASSWORD')
+
+        if not smtp_username or not smtp_password:
+            raise ValueError("As credenciais do SMTP não foram configuradas corretamente.")
+
         msg = MIMEText(body)
         msg['Subject'] = subject
-        msg['From'] = sender_email
+        msg['From'] = smtp_username
         msg['To'] = receiver_email
 
         with smtplib.SMTP(smtp_server, smtp_port) as server:
