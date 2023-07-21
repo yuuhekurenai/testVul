@@ -415,93 +415,64 @@ def check_wifi_security(log_list):
     log_list.append("Segurança da rede Wi-Fi verificada.")
 
 # Função para verificar a segurança ao executar o programa
-def check_security(log_list, progress_bar, log_text):
+def check_security(log_list, progress_bar, log_text, update_status, update_log_and_status):
     try:
+        # Verificação de compatibilidade do sistema
+        update_status("Verificando compatibilidade do sistema...")
         check_system_compatibility(log_list)
         operating_system = platform.system()
-        linux_version_result = None
-        windows_version_result = None
-        macos_version_result = None
-        network_vulnerabilities = None
-        user_data_security = None
-        wifi_security = None
 
         if operating_system == 'Linux':
+            # Verificação de versões do Linux
+            update_status("Verificando versão do Linux...")
             check_linux_version(log_list)
+
+            # Verificação de vulnerabilidades de rede
+            update_status("Verificando vulnerabilidades de rede...")
             network_vulnerabilities = check_network_vulnerabilities(log_list)
+
+            # Verificação de segurança dos dados dos usuários
+            update_status("Verificando segurança dos dados dos usuários...")
             user_data_security = check_user_data_security(log_list)
-            wifi_security = check_wifi_security(log_list)  # Nova função de verificação adicionada
+
+            # Verificação de segurança da rede Wi-Fi
+            update_status("Verificando segurança da rede Wi-Fi...")
+            wifi_security = check_wifi_security(log_list)
+
+            # Outras verificações específicas do Linux podem ser adicionadas aqui
+
         elif operating_system == 'Windows':
+            # Verificação de versões do Windows
+            update_status("Verificando versão do Windows...")
             check_windows_version(log_list)
-            if windows_version_result:
-                fix_common_network_security_issues()
+            # Outras verificações específicas do Windows podem ser adicionadas aqui
+
         elif operating_system == 'Darwin':
+            # Verificação de versões do MacOS
+            update_status("Verificando versão do MacOS...")
             check_macos_version(log_list)
+            # Outras verificações específicas do MacOS podem ser adicionadas aqui
 
-        fixes_applied = False
+        # Verificação de outras etapas comuns, independentemente do sistema operacional
+        update_status("Verificando outras etapas comuns...")
+        check_and_remove_cryptojacking()
+        remove_malicious_executables()
+        configure_connection_limits()
+        configure_ids_ips()
 
-        if operating_system == 'Linux' and (linux_version_result or network_vulnerabilities or user_data_security):
-            # Se foram encontradas vulnerabilidades no Linux
-            subject = 'Relatório de Verificação de Segurança - Vulnerabilidades Encontradas (Linux)'
-            body = 'Foram encontradas as seguintes vulnerabilidades no Linux:\n\n'
+        # Atualizar o progresso da barra
+        progress_bar.stop()
+        progress_bar["value"] = 100
 
-            if linux_version_result:
-                body += 'Vulnerabilidades no Linux:\n'
-                body += linux_version_result + '\n\n'
-
-            if network_vulnerabilities:
-                body += 'Vulnerabilidades de rede (portas abertas):\n'
-                for port in network_vulnerabilities:
-                    body += f'A porta {port} está aberta e é conhecida por ser vulnerável.\n'
-
-            if user_data_security:
-                body += 'Vulnerabilidades nos dados dos usuários:\n'
-                for file in user_data_security:
-                    body += file + '\n'
-
-            fixes_applied = True
-        elif operating_system == 'Windows' and windows_version_result:
-            subject = 'Relatório de Verificação de Segurança - Versão do Windows'
-            body = f'O Windows está na versão {windows_version_result}'
-            fixes_applied = True
-        elif operating_system == 'Darwin' and macos_version_result:
-            subject = 'Relatório de Verificação de Segurança - Versão do MacOS'
-            body = f'O MacOS está na versão {macos_version_result}'
-            fixes_applied = True
-
-        if fixes_applied:
-            # Verificar e remover o cryptojacking
-            check_and_remove_cryptojacking()
-
-            # Remover executáveis maliciosos
-            remove_malicious_executables()
-
-            # Configurar limites de conexão
-            configure_connection_limits()
-
-            # Configurar IDS/IPS
-            configure_ids_ips()
-
-            # Verificar segurança da rede Wi-Fi
-            check_wifi_security(log_list)
-
-            # Enviar o e-mail apenas se a barra de progresso estiver completa (100%)
-            if progress_bar["value"] == 100:
-                send_email(subject, body)
-                log_list.append("E-mail enviado.")
-                logging.info("E-mail de relatório enviado.")
-                messagebox.showinfo('Concluído', 'A verificação de segurança foi concluída e o e-mail foi enviado.')
-            else:
-                messagebox.showinfo('Concluído', 'A verificação de segurança foi concluída.')
-
-        # Atualizar a lista de log
-        update_log_list(log_list, log_text)
+        # Atualizar a lista de log e o status da verificação
+        window.after(100, update_log_and_status)
 
     except Exception as e:
         log_list.append("Ocorreu um erro durante a verificação de segurança:")
         log_list.append(str(e))
         logging.exception("Erro durante a verificação de segurança:")
-        update_log_list(log_list, log_text)
+        update_log_and_status()
+
 
 
 # Função para atualizar a lista de log
@@ -514,25 +485,23 @@ def update_log_list(log_list, log_text):
 
 
 # Função para iniciar a verificação de segurança
-def start_security_check(progress_bar, log_text):
+def start_security_check(progress_bar, log_text, status_label):
     progress_bar.start()
 
-    # Chama a função para verificar a segurança em segundo plano
+    # Função para atualizar o status da verificação
+    def update_status(status):
+        status_label.config(text=status)
+
     log_list = []
-    window.after(100, lambda: check_security(log_list, progress_bar, log_text))
 
-    # Verifica o progresso da barra e atualiza a lista de log
-    def check_progress():
-        progress = progress_bar["value"]
-        if progress == 100:
-            log_list.append("Verificação de segurança concluída.")
-            update_log_list(log_list, log_text)
-            return
-        window.after(100, check_progress)
+    # Função para atualizar a lista de log e o status da verificação
+    def update_log_and_status():
+        update_log_list(log_list, log_text)
+        status_label.config(text="Verificação de segurança concluída.")
+        messagebox.showinfo('Concluído', 'A verificação de segurança foi concluída.')
 
-    # Inicia a verificação de progresso
-    check_progress()
-
+    # Chama a função para verificar a segurança em segundo plano
+    window.after(100, lambda: check_security(log_list, progress_bar, log_text, update_status, update_log_and_status))
 
 # Função para cancelar a verificação de segurança
 def cancel_security_check(progress_bar):
@@ -545,9 +514,13 @@ window = tk.Tk()
 window.title('Verificação de Segurança')
 window.geometry('400x300')
 
+# Cria o Label para exibir o status da verificação
+status_label = tk.Label(window, text="Aguardando início da verificação...")
+status_label.pack(pady=10)
+
 # Cria o botão de início da verificação
 start_button = tk.Button(window, text='Iniciar Verificação',
-                         command=lambda: start_security_check(progress_bar, log_text))
+                         command=lambda: start_security_check(progress_bar, log_text, status_label))
 start_button.pack(pady=10)
 
 # Cria o botão de cancelamento da verificação
@@ -555,8 +528,12 @@ cancel_button = tk.Button(window, text='Cancelar Verificação', command=lambda:
 cancel_button.pack(pady=10)
 
 # Cria a barra de progresso
-progress_bar = Progressbar(window, length=300)
+progress_bar = Progressbar(window, length=300, mode="indeterminate")  # Modo indeterminado
 progress_bar.pack(pady=10)
+
+# Cria o Label para exibir o resultado final da verificação
+result_label = tk.Label(window, text="", fg="green")
+result_label.pack(pady=10)
 
 # Cria a lista de log
 log_text = tk.Text(window, height=10, state=tk.DISABLED)
